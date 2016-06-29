@@ -2,36 +2,29 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
-        // foo: {
-        //    default: null,
-        //    url: cc.Texture2D,  // optional, default is typeof default
-        //    serializable: true, // optional, default is true
-        //    visible: true,      // optional, default is true
-        //    displayName: 'Foo', // optional
-        //    readonly: false,    // optional, default is false
-        // },
-        // ...
+        
     },
 
     // use this for initialization
     onLoad: function () {
         this.TiledSize = 80; //单个地格大小
-        this.MapWidth = 17; //地图宽度
-        this.MapHeight = 4; //地图高度
+        this.MapWidth = 18; //地图宽度
+        this.MapHeight = 18; //地图高度
         this.TiledOffset = this.TiledSize / 2;
         this.XSpacing = this.TiledSize * 3 / 4;
         this.playerX = 8;
         this.playerY = 8;
 
-        for(var x = 0; x < 17; ++x){
-            for(var y = 0;y < 17; ++y){
+        for(var x = 0; x < this.MapWidth; ++x){
+            for(var y = 0;y < this.MapHeight; ++y){
                 let node = new cc.Node();
                 let label = node.addComponent(cc.Label);
-                label.fontSize = 25;
-                label.lineHeight = 25;
+                label.fontSize = 12;
+                label.lineHeight = 12;
                 //label.string = cc.js.formatStr("%s(%s,%s)", x*18+y, x, y);
                 label.string = cc.js.formatStr("(%s,%s)", x, y);
                 node.position = this.toPixelLoc(x,y);
+                label.string = cc.js.formatStr("(%s,%s)\n(%s,%s)", node.position.x, node.position.y, x, y);
                 node.rotation = -90;
                 this.node.addChild(node);
             }
@@ -40,23 +33,42 @@ cc.Class({
 
         this.node.on('touchend',this.move,this);
 
+
+        var bg = this.node.parent.getChildByName('mask');
+        bg.on("touchstart", function(event){
+            event.stopPropagation();
+        }, bg);
     },
+
+    startGame:function(){
+        this.map = [];
+        for(var i = 0; i < this.MapWidth * this.MapHeight; ++i){
+            this.map.push([]);
+        }
+        for(var x = 0; x < this.MapWidth; ++x){
+            for(var y = 0; y < this.MapHeight; ++y){
+
+            }
+        }
+
+
+        this.node.parent.getChildByName('mask').active = false;
+    },
+
+    getLocNum:function(x,  y){
+        return x + y * this.MapWidth;
+    },
+
     move:function(event){
-
         var loc = event.getLocation();
-
         var temp = this.node.convertToNodeSpace(loc);
-        //loc = cc.p(loc.y, loc.x);
-        cc.log(temp);
         loc = this.toHexagonLoc(temp);
-        cc.log('touchloc:' + loc);
+        cc.log('touchloc:(%s, %s) -> (%s, %s)', temp.x, temp.y, loc.x, loc.y);
         
         var round = this.getRound(this.playerX, this.playerY);
-        cc.log('round:' + round);
         if(this.search(round, loc.x, loc.y) === null){
             return;
         }
-        cc.log('moveto' + loc);
         var target = this.toPixelLoc(loc.x, loc.y);
         var cur = this.toPixelLoc(this.playerX, this.playerY);
 
@@ -89,7 +101,7 @@ cc.Class({
     /// 基础函数 - 将一个像素坐标点转为六边形地图坐标
     toHexagonLoc:function(loc){
         var x = parseInt((loc.x + 3 - this.TiledSize / 4) / this.XSpacing);
-        var y = parseInt((loc.y + 3 - (x + 1) % 2 * this.TiledOffset) / this.TiledSize);
+        var y = parseInt((loc.y + 3 - (x + 1) % 2 * this.TiledOffset + this.TiledOffset) / this.TiledSize);
         return cc.p(x, y);
     },
 
